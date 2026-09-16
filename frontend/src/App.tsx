@@ -21,7 +21,7 @@ export default function App() {
   const react = async (joke: Joke, reaction: 'LIKE' | 'DISLIKE') => { const updated = await api.react(joke.id, reaction); setJokes(items => items.map(j => j.id === updated.id ? updated : j)) }
   const nav = (next: Page) => { setPage(next); setError('') }
   return <div className="app">
-    <header><button className="brand" onClick={() => nav('swipe')}><span><Laugh /></span><b>Смехдер</b><small>β</small></button><nav><button className={page === 'swipe' ? 'active' : ''} onClick={() => nav('swipe')}><Flame/> Свайпы</button><button className={page === 'library' ? 'active' : ''} onClick={() => nav('library')}><BookOpen/> Анекдотека</button><button className={page === 'docs' ? 'active' : ''} onClick={() => nav('docs')}><Code2/> API</button></nav></header>
+    <header><button className="brand" onClick={() => nav('swipe')}><span><Laugh /></span><b>Смехдер</b><small>β</small></button><div className="header-actions"><nav><button className={page === 'swipe' ? 'active' : ''} onClick={() => nav('swipe')}><Flame/> Свайпы</button><button className={page === 'library' ? 'active' : ''} onClick={() => nav('library')}><BookOpen/> Анекдотека</button><button className={page === 'docs' ? 'active' : ''} onClick={() => nav('docs')}><Code2/> API</button></nav></div></header>
     <main>
       {error && <div className="toast"><span>{error}</span><button onClick={() => setError('')}>×</button></div>}
       {loading && page !== 'docs' ? <div className="loader"><RefreshCw/><span>Прогреваем шутки…</span></div> : <>

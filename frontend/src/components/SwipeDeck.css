@@ -1,0 +1,57 @@
+html,
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+
+.card-stage .next-card {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 34px;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(145deg, #25202d, #1a171f);
+  filter: brightness(.82);
+  transition: transform .18s ease, filter .18s ease;
+}
+
+.card-stage .swipe-card {
+  z-index: 2;
+  cursor: grab;
+}
+
+.card-stage .swipe-card.dragging {
+  cursor: grabbing;
+}
+
+.card-stage .swipe-card.flying {
+  transition: transform .32s cubic-bezier(.3, .75, .35, 1);
+}
+
+.card-stage .next-card::after {
+  content: '“';
+  position: absolute;
+  top: -40px;
+  right: 25px;
+  color: #ffffff07;
+  font: 230px Georgia, serif;
+}
+
+.card-stage .next-card blockquote {
+  margin: 22px 0;
+  font-size: clamp(21px, 2vw, 27px);
+  font-weight: 600;
+  line-height: 1.48;
+  letter-spacing: -.02em;
+}
+
+@media (max-width: 800px) {
+  .card-stage .next-card {
+    padding: 27px;
+  }
+}

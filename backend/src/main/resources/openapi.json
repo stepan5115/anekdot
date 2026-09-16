@@ -1,6 +1,6 @@
 {
   "openapi": "3.0.3",
-  "info": {"title": "Смехдер API", "version": "1.0.0", "description": "REST API для анекдотов и реакций"},
+  "info": {"title": "Смехдер API", "version": "1.2.0", "description": "Открытый REST API для анекдотов и реакций"},
   "servers": [{"url": "http://localhost:8080"}],
   "paths": {
     "/api/jokes": {
@@ -32,4 +32,3 @@
     }
   }
 }
-

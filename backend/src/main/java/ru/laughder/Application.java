@@ -21,16 +21,18 @@ public final class Application {
     public static void main(String[] args) {
         DatabaseConfig database = DatabaseConfig.fromEnvironment();
         database.migrate();
-        JokeController jokes = new JokeController(new JokeService(new JokeRepository(database.jdbi())));
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         String origin = System.getenv().getOrDefault("CORS_ORIGIN", "http://localhost:5173");
 
         ObjectMapper mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        JokeController jokes = new JokeController(new JokeService(new JokeRepository(database.jdbi())));
         Javalin app = Javalin.create(config -> {
             config.jsonMapper(new JavalinJackson(mapper, false));
-            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> rule.allowHost(origin)));
+            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
+                rule.allowHost(origin);
+            }));
             config.routes.get("/health", ctx -> ctx.json(java.util.Map.of("status", "ok")));
             config.routes.get("/openapi.json", ctx -> ctx.contentType("application/json")
                     .result(Application.class.getResourceAsStream("/openapi.json")));

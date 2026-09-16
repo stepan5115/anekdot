@@ -15,4 +15,3 @@ export function Library({ jokes, onAdd, onEdit, onDelete }: { jokes: Joke[]; onA
     </article>)}</div>}
   </section>
 }
-

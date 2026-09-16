@@ -1,5 +1,5 @@
 import type { ApiError, Joke, JokeInput } from './types'
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } })
@@ -18,4 +18,3 @@ export const api = {
   react: (id: number, reaction: 'LIKE' | 'DISLIKE') => request<Joke>(`/api/jokes/${id}/reaction`, { method: 'POST', body: JSON.stringify({ reaction }) }),
   docsUrl: `${API_URL}/openapi.json`,
 }
-

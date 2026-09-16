@@ -4,4 +4,3 @@ export interface Joke {
 }
 export type JokeInput = Pick<Joke, 'text' | 'category' | 'author' | 'publishedAt' | 'absurdityLevel' | 'adult'>
 export interface ApiError { error: string; details: string[] }
-

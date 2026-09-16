@@ -28,15 +28,13 @@ services:
       - "8080:8080"
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        VITE_API_URL: http://localhost:8080
+    build: ./frontend
+    environment:
+      VITE_PROXY_TARGET: http://api:8080
     depends_on:
       - api
     ports:
-      - "5173:80"
+      - "5173:5173"
 
 volumes:
   postgres_data:
-
