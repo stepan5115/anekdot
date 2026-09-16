@@ -1,0 +1,35 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Смехдер API", "version": "1.0.0", "description": "REST API для анекдотов и реакций"},
+  "servers": [{"url": "http://localhost:8080"}],
+  "paths": {
+    "/api/jokes": {
+      "get": {"summary": "Получить все анекдоты", "responses": {"200": {"description": "Список", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/Joke"}}}}}}},
+      "post": {"summary": "Создать анекдот", "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JokeRequest"}}}}, "responses": {"201": {"description": "Создан", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}}}
+    },
+    "/api/jokes/{id}": {
+      "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer", "format": "int64"}}],
+      "get": {"summary": "Получить анекдот", "responses": {"200": {"description": "Найден", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "put": {"summary": "Полностью обновить анекдот", "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JokeRequest"}}}}, "responses": {"200": {"description": "Обновлён", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "patch": {"summary": "Частично обновить анекдот", "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/JokePatch"}}}}, "responses": {"200": {"description": "Обновлён", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "delete": {"summary": "Удалить анекдот", "responses": {"204": {"description": "Удалён"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+    },
+    "/api/jokes/{id}/reaction": {
+      "post": {"summary": "Поставить реакцию", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer", "format": "int64"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reaction"}}}}, "responses": {"200": {"description": "Реакция учтена", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+    }
+  },
+  "components": {
+    "schemas": {
+      "Joke": {"allOf": [{"$ref": "#/components/schemas/JokeRequest"}, {"type": "object", "properties": {"id": {"type": "integer", "format": "int64"}, "likes": {"type": "integer"}, "dislikes": {"type": "integer"}, "createdAt": {"type": "string", "format": "date-time"}}}]},
+      "JokeRequest": {"type": "object", "required": ["text", "category", "author", "publishedAt", "absurdityLevel", "adult"], "properties": {"text": {"type": "string", "minLength": 1, "maxLength": 2000}, "category": {"type": "string", "maxLength": 50}, "author": {"type": "string", "maxLength": 100}, "publishedAt": {"type": "string", "format": "date"}, "absurdityLevel": {"type": "integer", "minimum": 1, "maximum": 10}, "adult": {"type": "boolean"}}},
+      "JokePatch": {"type": "object", "properties": {"text": {"type": "string", "minLength": 1, "maxLength": 2000}, "category": {"type": "string"}, "author": {"type": "string"}, "publishedAt": {"type": "string", "format": "date"}, "absurdityLevel": {"type": "integer", "minimum": 1, "maximum": 10}, "adult": {"type": "boolean"}}},
+      "Reaction": {"type": "object", "required": ["reaction"], "properties": {"reaction": {"type": "string", "enum": ["LIKE", "DISLIKE"]}}},
+      "Error": {"type": "object", "properties": {"error": {"type": "string"}, "details": {"type": "array", "items": {"type": "string"}}}}
+    },
+    "responses": {
+      "BadRequest": {"description": "Ошибка данных", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+      "NotFound": {"description": "Не найден", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}
+    }
+  }
+}
+
