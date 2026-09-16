@@ -4,3 +4,5 @@ export interface Joke {
 }
 export type JokeInput = Pick<Joke, 'text' | 'category' | 'author' | 'publishedAt' | 'absurdityLevel' | 'adult'>
 export interface ApiError { error: string; details: string[] }
+export type Reaction = 'LIKE' | 'DISLIKE'
+export interface SwipeAction { jokeId: number; reaction: Reaction }

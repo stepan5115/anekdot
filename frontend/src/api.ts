@@ -16,5 +16,6 @@ export const api = {
   patch: (id: number, body: Partial<JokeInput>) => request<Joke>(`/api/jokes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   remove: (id: number) => request<void>(`/api/jokes/${id}`, { method: 'DELETE' }),
   react: (id: number, reaction: 'LIKE' | 'DISLIKE') => request<Joke>(`/api/jokes/${id}/reaction`, { method: 'POST', body: JSON.stringify({ reaction }) }),
+  undoReaction: (id: number, reaction: 'LIKE' | 'DISLIKE') => request<Joke>(`/api/jokes/${id}/reaction`, { method: 'DELETE', body: JSON.stringify({ reaction }) }),
   docsUrl: `${API_URL}/openapi.json`,
 }

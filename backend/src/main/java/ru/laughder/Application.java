@@ -42,6 +42,7 @@ public final class Application {
             config.routes.put("/api/jokes/{id}", jokes::replace);
             config.routes.patch("/api/jokes/{id}", jokes::patch);
             config.routes.post("/api/jokes/{id}/reaction", jokes::react);
+            config.routes.delete("/api/jokes/{id}/reaction", jokes::undoReaction);
             config.routes.delete("/api/jokes/{id}", jokes::delete);
             config.routes.exception(ApiException.class, (e, ctx) -> ctx.status(e.status())
                     .json(new ErrorResponse(e.error(), e.details())));

@@ -73,6 +73,14 @@ public class JokeRepository {
         return changed == 0 ? Optional.empty() : findById(id);
     }
 
+    public Optional<Joke> undoReaction(long id, boolean like) {
+        String column = like ? "likes" : "dislikes";
+        int changed = jdbi.withHandle(h -> h.createUpdate(
+                "UPDATE jokes SET " + column + " = GREATEST(" + column + " - 1, 0) WHERE id=:id")
+                .bind("id", id).execute());
+        return changed == 0 ? Optional.empty() : findById(id);
+    }
+
     public boolean delete(long id) {
         return jdbi.withHandle(h -> h.createUpdate("DELETE FROM jokes WHERE id=:id")
                 .bind("id", id).execute()) > 0;
@@ -87,4 +95,3 @@ public class JokeRepository {
                 rs.getInt("dislikes"), rs.getObject("created_at", java.time.OffsetDateTime.class));
     }
 }
-

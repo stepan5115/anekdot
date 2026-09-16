@@ -15,7 +15,8 @@
       "delete": {"summary": "Удалить анекдот", "responses": {"204": {"description": "Удалён"}, "404": {"$ref": "#/components/responses/NotFound"}}}
     },
     "/api/jokes/{id}/reaction": {
-      "post": {"summary": "Поставить реакцию", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer", "format": "int64"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reaction"}}}}, "responses": {"200": {"description": "Реакция учтена", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}, "404": {"$ref": "#/components/responses/NotFound"}}}
+      "post": {"summary": "Поставить реакцию", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer", "format": "int64"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reaction"}}}}, "responses": {"200": {"description": "Реакция учтена", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}, "404": {"$ref": "#/components/responses/NotFound"}}},
+      "delete": {"summary": "Отменить последнюю реакцию", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer", "format": "int64"}}], "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Reaction"}}}}, "responses": {"200": {"description": "Счётчик реакции уменьшен", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Joke"}}}}, "400": {"$ref": "#/components/responses/BadRequest"}, "404": {"$ref": "#/components/responses/NotFound"}}}
     }
   },
   "components": {

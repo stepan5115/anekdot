@@ -25,6 +25,9 @@ public class JokeController {
     public void react(Context ctx) {
         ctx.json(service.react(id(ctx), ctx.bodyAsClass(ReactionRequest.class).reaction()));
     }
+    public void undoReaction(Context ctx) {
+        ctx.json(service.undoReaction(id(ctx), ctx.bodyAsClass(ReactionRequest.class).reaction()));
+    }
     public void delete(Context ctx) { service.delete(id(ctx)); ctx.status(204); }
 
     private long id(Context ctx) {
@@ -37,4 +40,3 @@ public class JokeController {
         }
     }
 }
-
