@@ -42,8 +42,10 @@ public final class Application {
                 rule.allowHost(origin);
             }));
             config.routes.get("/health", ctx -> ctx.json(java.util.Map.of("status", "ok")));
-            config.routes.get("/openapi.json", ctx -> ctx.contentType("application/json")
-                    .result(Application.class.getResourceAsStream("/openapi.json")));
+            config.routes.get("/openapi.json", ctx -> {
+                authService.verify(ctx.header("Authorization"));
+                ctx.contentType("application/json").result(Application.class.getResourceAsStream("/openapi.json"));
+            });
             config.routes.post("/api/auth/login", auth::login);
             config.routes.get("/api/auth/verify", auth::verify);
             config.routes.get("/api/jokes", jokes::list);
