@@ -112,6 +112,9 @@ body {
 .reaction.undo { width: 48px; height: 48px; color: #a9a1b3; }
 .reaction.undo:disabled { opacity: .25; }
 .results { height: auto; min-height: 430px; padding: 38px 24px; }
+.maximum-absurdity:not(.dragging) { animation: absurdShake .35s .35s both; }
+.cat-card::before { content:'🐾'; position:absolute; left:20px; bottom:92px; opacity:.18; font-size:25px; transform:rotate(-18deg); }
+@keyframes absurdShake { 20% { margin-left:-3px; } 40% { margin-left:3px; } 60% { margin-left:-2px; } 80% { margin-left:2px; } }
 .result-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
 .result-grid div { display: flex; flex-direction: column; padding: 16px 8px; border-radius: 14px; background: #ffffff08; }
 .result-grid b { color: white; font-size: 22px; }

@@ -1,4 +1,6 @@
 .machine-page { display:grid; grid-template-columns:.8fr 1.2fr; gap:70px; align-items:center; min-height:650px; }
+.fortune-question { display:flex; flex-direction:column; gap:7px; margin:0 auto 12px; width:min(100%,560px); color:#aaa2b4; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+.fortune-question select { padding:11px 13px; border:1px solid #ffffff17; border-radius:12px; outline:0; background:#1d1924; color:white; text-transform:none; letter-spacing:0; }
 .machine-intro h1 { font-size:clamp(46px,6vw,76px); line-height:.95; letter-spacing:-.055em; margin:12px 0 24px; }
 .machine-intro h1 i { font-style:normal; color:#ffd43b; }
 .machine-intro p { max-width:440px; color:var(--muted); font-size:17px; line-height:1.7; }
@@ -16,18 +18,19 @@
 .machine-result>div { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#a89db5; }
 .machine-result blockquote { margin:18px 0; font-size:20px; line-height:1.48; font-weight:700; color:white; }
 .machine-result small { color:#a89db5; }
+.machine-verdict { display:flex!important; flex-direction:column; align-items:flex-start!important; gap:5px; margin-top:14px; padding:11px; border-radius:10px; background:#ffd43b12; color:#ffd43b!important; }
+.machine-verdict span { color:#c9bd9b; }
 .machine-result svg { color:#ffd43b; }
 .pull-hint { text-align:center; color:#ffd43b; font-size:11px; font-weight:900; letter-spacing:.12em; padding:10px 0 2px; }
-.lever { --pull:0px; --pull-x:0px; --angle:0deg; position:absolute; right:-62px; top:128px; width:58px; height:205px; border:0; background:transparent; touch-action:none; cursor:grab; }
+.lever { --pull:0px; position:absolute; right:-63px; top:105px; width:67px; height:245px; border:0; background:transparent; touch-action:none; cursor:grab; }
 .lever.dragging { cursor:grabbing; }
-.lever span { position:absolute; left:25px; top:52px; width:10px; height:110px; border-radius:8px; background:linear-gradient(90deg,#8c8299,#eee,#746b80); transform-origin:50% 100%; transform:rotate(var(--angle)); transition:transform .22s ease; }
-.lever i { position:absolute; left:12px; top:14px; width:38px; height:38px; border-radius:50%; background:#ff486d; box-shadow:inset -6px -7px 0 #ad2144,0 5px 15px #0008; transform:translate(var(--pull-x),var(--pull)); transition:transform .22s ease; }
-.lever.dragging span,.lever.dragging i { transition:none; }
+.lever-track { position:absolute; left:27px; top:14px; width:17px; height:215px; border-radius:12px; background:#150d22; border:3px solid #6f6280; box-shadow:inset 0 0 8px #000; }
+.lever-arm { position:absolute; left:30px; top:31px; width:11px; height:112px; border-radius:8px; background:linear-gradient(90deg,#8c8299,#eee,#746b80); transform:translateY(var(--pull)); transition:transform .25s ease; }
+.lever-arm i { position:absolute; left:50%; top:-20px; width:40px; height:40px; border-radius:50%; background:#ff486d; box-shadow:inset -6px -7px 0 #ad2144,0 5px 15px #0008; transform:translateX(-50%); }
+.lever.dragging .lever-arm { transition:none; }
 .lever:disabled { cursor:default; }
-.spinning .lever span { animation:leverReturn .35s ease; }
-.spinning .lever i { animation:ballReturn .35s ease; }
-@keyframes leverReturn { from { transform:rotate(14deg); } to { transform:rotate(0); } }
-@keyframes ballReturn { from { transform:translate(22px,90px); } to { transform:translate(0); } }
+.spinning .lever-arm { animation:leverReturn .35s ease; }
+@keyframes leverReturn { from { transform:translateY(90px); } to { transform:translateY(0); } }
 @keyframes reelBlur { 50% { transform:translateY(28px); filter:blur(5px); } }
 @keyframes blink { to { opacity:.25; } }
 @keyframes jackpot { from { transform:scale(.96); opacity:0; } 60% { transform:scale(1.02); } }
@@ -37,7 +40,7 @@
   .machine-intro h1 { font-size:48px; }
   .machine-intro p { margin:auto; }
   .slot-machine { width:calc(100% - 20px); padding:28px 20px 24px; }
-  .lever { right:-45px; transform:scale(.78); }
+  .lever { right:-50px; transform:scale(.82); }
   .machine-title { font-size:20px; }
   .reel { height:72px; }
   .machine-result { min-height:190px; padding:18px; }

@@ -1,0 +1,7 @@
+services:
+  nginx:
+    volumes:
+      - ./nginx/https.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - certbot_www:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt:ro
+    ports: ["443:443"]

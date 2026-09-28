@@ -96,6 +96,8 @@ export function SwipeDeck({ jokes, actions, onReact, onUndo, onReset }: Props) {
   const favoriteCategory = [...new Set(likedJokes.map(joke => joke.category))]
     .sort((a, b) => likedJokes.filter(joke => joke.category === b).length - likedJokes.filter(joke => joke.category === a).length)[0]
   const averageAbsurdity = likedJokes.length ? (likedJokes.reduce((sum, joke) => sum + joke.absurdityLevel, 0) / likedJokes.length).toFixed(1) : '—'
+  const lastTen = actions.slice(-10)
+  const streak = lastTen.length === 10 && lastTen.every(action => action.reaction === lastTen[0].reaction) ? lastTen[0].reaction : null
 
   const controls = <>
     <div className="deck-tools">
@@ -115,10 +117,12 @@ export function SwipeDeck({ jokes, actions, onReact, onUndo, onReset }: Props) {
 
   return <section className="swipe-zone">
     {controls}
+    {streak && <div className={`streak ${streak === 'LIKE' ? 'happy' : ''}`}>{streak === 'LIKE' ? '🎉 Смеющийся без причины: 10 ахахов подряд!' : '🧐 Может, дело уже не в анекдотах?'}</div>}
+    {actions.length >= 100 && actions.length % 100 === 0 && <div className="streak">Вы посмотрели весь интернет. Можно идти гулять.</div>}
     <div className="deck-meta"><span>{filteredSeenCount + 1} из {filtered.length}</span><span>← баян · ахах →</span></div>
     <div className="card-stage">
       {next && <article key={`next-${next.id}`} className="joke-card next-card" style={{ transform: `translateY(${18 - progress * 18}px) rotate(${2 - progress * 2}deg)` }} aria-hidden="true"><CardContent joke={next}/></article>}
-      <article key={current.id} className={`joke-card swipe-card ${dragging ? 'dragging' : ''} ${busy ? 'flying' : ''} ${resetting ? 'resetting' : ''}`} style={{ transform: `translateX(${offset}px) rotate(${tilt}deg)` }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+      <article key={current.id} className={`joke-card swipe-card ${dragging ? 'dragging' : ''} ${busy ? 'flying' : ''} ${resetting ? 'resetting' : ''} ${current.absurdityLevel === 10 ? 'maximum-absurdity' : ''} ${current.category === 'Коты' ? 'cat-card' : ''}`} style={{ transform: `translateX(${offset}px) rotate(${tilt}deg)` }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
         <span className={`stamp nope ${offset < -45 ? 'visible' : ''}`}>БАЯН</span><span className={`stamp like ${offset > 45 ? 'visible' : ''}`}>АХАХ</span><CardContent joke={current}/>
       </article>
     </div>

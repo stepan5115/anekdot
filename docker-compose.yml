@@ -1,40 +1,59 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: laughder
-      POSTGRES_USER: laughder
-      POSTGRES_PASSWORD: laughder
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_DB: ${POSTGRES_DB:-laughder}
+      POSTGRES_USER: ${POSTGRES_USER:-laughder}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes: [postgres_data:/var/lib/postgresql/data]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U laughder -d laughder"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
-
+    networks: [internal]
   api:
     build: ./backend
+    restart: unless-stopped
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/laughder
-      DB_USER: laughder
-      DB_PASSWORD: laughder
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-laughder}
+      DB_USER: ${POSTGRES_USER:-laughder}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      ADMIN_LOGIN: ${ADMIN_LOGIN:?Set ADMIN_LOGIN in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_TTL_HOURS: ${JWT_TTL_HOURS:-8}
       PORT: 8080
-      CORS_ORIGIN: http://localhost:5173
+      CORS_ORIGIN: https://${DOMAIN:?Set DOMAIN in .env}
     depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-
+      postgres: {condition: service_healthy}
+    networks: [internal]
   frontend:
     build: ./frontend
+    restart: unless-stopped
+    networks: [internal]
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
     environment:
-      VITE_PROXY_TARGET: http://api:8080
-    depends_on:
-      - api
-    ports:
-      - "5173:5173"
-
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    volumes:
+      - ./nginx/http.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - certbot_www:/var/www/certbot:ro
+    ports: ["80:80"]
+    depends_on: [frontend, api]
+    networks: [internal]
+  certbot:
+    image: certbot/certbot:v3.1.0
+    profiles: [tools]
+    volumes:
+      - certbot_www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
 volumes:
   postgres_data:
+  certbot_www:
+  letsencrypt:
+networks:
+  internal:
+    driver: bridge

@@ -1,150 +1,182 @@
 # Смехдер
 
-«Смехдер» — шуточный Tinder для текстовых анекдотов и небольшое полноценное
-CRUD-приложение. Анекдоты можно свайпать, оценивать, искать, создавать,
-редактировать и удалять. Все функции доступны без регистрации и авторизации.
+React + Java 21/Javalin + PostgreSQL приложение с публичными анекдотами и
+JWT-защищённой административной CRUD-страницей. В production весь трафик идёт
+через nginx; API, frontend и БД наружу не публикуются.
 
-В режиме свайпов доступны фильтры, случайный порядок, отмена последнего свайпа,
-итоговая статистика и управление стрелками клавиатуры. Понравившиеся карточки
-сохраняются в локальную коллекцию «Мои ахахи».
+## Авторизация
 
-В отдельном режиме «Анекдомат» работает игровой автомат: анимированные барабаны
-и рычаг выбирают случайный анекдот из локальной базы без ставок и валюты.
+Чтение анекдотов и реакции публичны. `POST /api/jokes`, `PUT`, `PATCH` и
+`DELETE /api/jokes/{id}` требуют `Authorization: Bearer <JWT>`. В интерфейсе
+вход появляется при открытии «Анекдотеки». JWT хранится в `sessionStorage` и
+исчезает при закрытии вкладки/браузера.
 
-Проект рассчитан на простой запуск на одном компьютере или внутри домашней и
-учебной локальной сети.
+При старте API после Flyway-миграций проверяется таблица `admins`. Если в ней
+нет ни одной записи, создаётся администратор из `ADMIN_LOGIN` и
+`ADMIN_PASSWORD`; пароль сохраняется как BCrypt-хеш. При последующих стартах
+аккаунт и пароль не перезаписываются. Поэтому изменение `ADMIN_PASSWORD` в
+`.env` не меняет пароль уже созданного администратора.
 
-## Стек
+Получить токен вручную:
 
-- React + TypeScript + Vite
-- Java 21 + Javalin + Jackson
-- JDBI + PostgreSQL
-- Flyway
-- OpenAPI 3 + Swagger UI
-- Docker Compose
+```bash
+curl -X POST https://YOUR_DOMAIN/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"login":"admin","password":"YOUR_PASSWORD"}'
+```
 
-## Быстрый запуск
+## Первичное развёртывание на Ubuntu и DuckDNS
 
-Понадобятся Docker Engine и Docker Compose.
+### 1. Домен и сеть
+
+1. Создайте поддомен на <https://www.duckdns.org>, например
+   `my-laughder.duckdns.org`, и направьте его на публичный IPv4 сервера.
+2. Если сервер за роутером, пробросьте TCP 80 и 443 на сервер. В облаке также
+   разрешите эти порты в security group.
+3. Проверьте DNS: `dig +short my-laughder.duckdns.org` должен вернуть IP
+   сервера. Let's Encrypt не выдаст сертификат, пока домен и порт 80 недоступны.
+
+Для динамического IP можно обновлять DuckDNS раз в 5 минут (подставьте токен):
+
+```bash
+mkdir -p "$HOME/duckdns"
+printf 'url="https://www.duckdns.org/update?domains=SUBDOMAIN&token=TOKEN&ip="\ncurl -fsS "$url"\n' > "$HOME/duckdns/update.sh"
+chmod 700 "$HOME/duckdns/update.sh"
+(crontab -l 2>/dev/null; echo '*/5 * * * * /home/USER/duckdns/update.sh >/dev/null 2>&1') | crontab -
+```
+
+### 2. Docker и firewall
+
+Установите Docker Engine и Compose plugin по официальной инструкции Docker.
+Затем откройте SSH до включения firewall:
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+docker --version
+docker compose version
+```
+
+### 3. Проект и секреты
 
 ```bash
 git clone git@github.com:stepan5115/anekdot.git
 cd anekdot
-docker compose up --build -d
+cp .env.example .env
+chmod 600 .env
+openssl rand -base64 36   # значение для POSTGRES_PASSWORD
+openssl rand -base64 48   # значение для JWT_SECRET
 ```
 
-После запуска доступны:
+Отредактируйте `.env`: укажите домен без `https://`, email, случайные секреты,
+логин и пароль администратора (минимум 12 символов). `.env` исключён из Git.
+Не используйте значения из `.env.example`.
 
-- интерфейс: <http://localhost:5173>
-- REST API: <http://localhost:8080/api/jokes>
-- OpenAPI JSON: <http://localhost:8080/openapi.json>
-- Swagger UI: раздел «API» в интерфейсе
+### 4. HTTP и первый сертификат
 
-При первом запуске Flyway создаёт таблицу и загружает 100 демонстрационных
-анекдотов. PostgreSQL хранит данные в Docker volume `postgres_data`.
-
-Посмотреть состояние и логи:
+Сначала поднимите HTTP-конфигурацию nginx:
 
 ```bash
+docker compose up -d --build
 docker compose ps
-docker compose logs -f
+curl http://YOUR_DOMAIN/health
 ```
 
-Остановить приложение:
+Получите сертификат (Compose автоматически читает `DOMAIN` и email из `.env`,
+но в shell их нужно загрузить явно):
 
 ```bash
-docker compose down
+set -a; . ./.env; set +a
+docker compose --profile tools run --rm certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d "$DOMAIN" --email "$LETSENCRYPT_EMAIL" \
+  --agree-tos --no-eff-email
 ```
 
-Удалить приложение вместе с локальной базой данных:
+Теперь переключитесь на HTTPS-конфигурацию:
 
 ```bash
-docker compose down -v
+docker compose -f docker-compose.yml -f compose.https.yml up -d --force-recreate nginx
+curl -I https://YOUR_DOMAIN
 ```
 
-## Запуск в локальной сети
-
-Узнайте локальный IP компьютера, на котором запущен Docker:
+HTTP начнёт перенаправлять на HTTPS. Проверить API и логи:
 
 ```bash
-hostname -I
+docker compose -f docker-compose.yml -f compose.https.yml ps
+docker compose -f docker-compose.yml -f compose.https.yml logs --tail=100 api nginx
 ```
 
-На другом устройстве в той же сети откройте:
+### 5. Автопродление сертификата
 
-```text
-http://IP-КОМПЬЮТЕРА:5173
+Certbot безопасно ничего не меняет, если сертификат ещё не близок к истечению.
+Добавьте root-cron (замените `/opt/anekdot` на абсолютный путь проекта):
+
+```bash
+sudo crontab -e
 ```
 
-Например: `http://192.168.1.42:5173`. Frontend сам проксирует запросы к API
-внутри Docker Compose, поэтому менять адрес API в исходниках не требуется.
-Если страница не открывается, разрешите входящие TCP-подключения к порту `5173`
-в локальном файрволе. Порт `8080` нужен снаружи только для прямого обращения к
-REST API.
+Строка для запуска ежедневно в 03:17 и перезагрузки nginx после проверки:
 
-## REST API
-
-| Метод | Путь | Назначение |
-|---|---|---|
-| GET | `/api/jokes` | Получить все анекдоты |
-| GET | `/api/jokes/{id}` | Получить один анекдот |
-| POST | `/api/jokes` | Создать анекдот |
-| PUT | `/api/jokes/{id}` | Полностью обновить анекдот |
-| PATCH | `/api/jokes/{id}` | Частично обновить анекдот |
-| DELETE | `/api/jokes/{id}` | Удалить анекдот |
-| POST | `/api/jokes/{id}/reaction` | Поставить `LIKE` или `DISLIKE` |
-| DELETE | `/api/jokes/{id}/reaction` | Отменить последнюю реакцию |
-
-Пример создания:
-
-```json
-{
-  "text": "Текст анекдота",
-  "category": "IT",
-  "author": "Народное",
-  "publishedAt": "2026-09-01",
-  "absurdityLevel": 7,
-  "adult": false
-}
+```cron
+17 3 * * * cd /opt/anekdot && /usr/bin/docker compose -f docker-compose.yml -f compose.https.yml --profile tools run --rm certbot renew --webroot -w /var/www/certbot --quiet && /usr/bin/docker compose -f docker-compose.yml -f compose.https.yml exec -T nginx nginx -s reload >> /var/log/laughder-certbot.log 2>&1
 ```
 
-## Локальная разработка без полной пересборки Compose
+Проверьте процедуру без выпуска сертификата:
 
-Сначала запустите PostgreSQL:
+```bash
+docker compose -f docker-compose.yml -f compose.https.yml --profile tools run --rm certbot renew --dry-run --webroot -w /var/www/certbot
+```
+
+## Быстрое применение изменений на уже подготовленном сервере
+
+Сертификаты, Docker volumes и `.env` сохраняются. Из каталога проекта:
+
+```bash
+git pull --ff-only
+docker compose -f docker-compose.yml -f compose.https.yml up -d --build --remove-orphans
+docker compose -f docker-compose.yml -f compose.https.yml ps
+docker compose -f docker-compose.yml -f compose.https.yml logs --tail=100 api nginx
+curl -fsS https://YOUR_DOMAIN/health
+```
+
+Flyway применит новые миграции при старте API. Не запускайте `docker compose
+down -v`: ключ `-v` удалит базу и сертификаты. Перед рискованными обновлениями
+сделайте backup:
+
+```bash
+set -a; . ./.env; set +a
+docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "backup-$(date +%F-%H%M).sql.gz"
+```
+
+## Локальная разработка
+
+Создайте `.env` по примеру и укажите `DOMAIN=localhost`. Compose теперь также
+работает только через nginx на <http://localhost>. Для hot reload запустите БД,
+API и Vite отдельно, экспортировав обязательные переменные из `.env`:
 
 ```bash
 docker compose up -d postgres
+set -a; . ./.env; set +a; export CORS_ORIGIN=http://localhost:5173
+cd backend && mvn package && java -jar target/laughder-api.jar
 ```
 
-API:
+В другом терминале: `cd frontend && npm ci && npm run dev`. Vite проксирует API
+на `localhost:8080`.
 
-```bash
-cd backend
-mvn package
-java -jar target/laughder-api.jar
-```
+## Переменные окружения
 
-Frontend в другом терминале:
+| Переменная | Назначение |
+|---|---|
+| `DOMAIN` | DuckDNS-домен без протокола |
+| `LETSENCRYPT_EMAIL` | email уведомлений Let's Encrypt |
+| `POSTGRES_*` | имя БД, пользователь и пароль |
+| `ADMIN_LOGIN`, `ADMIN_PASSWORD` | bootstrap первого администратора |
+| `JWT_SECRET` | HMAC-ключ, не менее 32 байт |
+| `JWT_TTL_HOURS` | срок JWT, по умолчанию 8 часов |
 
-```bash
-cd frontend
-npm ci
-npm run dev
-```
-
-Vite в режиме разработки проксирует `/api` и `/openapi.json` на
-`http://localhost:8080`. При необходимости адрес можно изменить переменной
-`VITE_PROXY_TARGET`.
-
-## Особенности
-
-- все CRUD-операции открыты и не требуют учётной записи;
-- тело запросов и ответов передаётся в JSON;
-- серверная валидация возвращает `400` в формате `error` + `details`;
-- неизвестные записи возвращают `404`, удаление — `204`;
-- PostgreSQL sequence не переиспользует удалённые идентификаторы;
-- реакции увеличиваются атомарным SQL-запросом;
-- история свайпов и «Мои ахахи» сохраняются в `localStorage`;
-- `←` ставит «Баян», `→` — «Ахах», а `Backspace` отменяет последний свайп;
-- приложение не содержит production-деплоя, TLS, доменной конфигурации или
-  внешних облачных зависимостей.
+Секреты читаются процессами из окружения, которое Compose загружает из `.env`.
+Само Java-приложение намеренно не парсит `.env`: это исключает случайное
+попадание файла с секретами внутрь образа.

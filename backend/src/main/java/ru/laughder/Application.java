@@ -7,10 +7,14 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.javalin.Javalin;
 import io.javalin.json.JavalinJackson;
 import ru.laughder.config.DatabaseConfig;
+import ru.laughder.config.SecurityConfig;
+import ru.laughder.controller.AuthController;
 import ru.laughder.controller.JokeController;
 import ru.laughder.dto.ErrorResponse;
 import ru.laughder.exception.ApiException;
 import ru.laughder.repository.JokeRepository;
+import ru.laughder.repository.AdminRepository;
+import ru.laughder.service.AuthService;
 import ru.laughder.service.JokeService;
 
 import java.util.List;
@@ -21,13 +25,17 @@ public final class Application {
     public static void main(String[] args) {
         DatabaseConfig database = DatabaseConfig.fromEnvironment();
         database.migrate();
+        SecurityConfig security = SecurityConfig.fromEnvironment();
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         String origin = System.getenv().getOrDefault("CORS_ORIGIN", "http://localhost:5173");
 
         ObjectMapper mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        JokeController jokes = new JokeController(new JokeService(new JokeRepository(database.jdbi())));
+        AuthService authService = new AuthService(new AdminRepository(database.jdbi()), security);
+        authService.bootstrapAdmin();
+        AuthController auth = new AuthController(authService);
+        JokeController jokes = new JokeController(new JokeService(new JokeRepository(database.jdbi())), authService);
         Javalin app = Javalin.create(config -> {
             config.jsonMapper(new JavalinJackson(mapper, false));
             config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
@@ -36,6 +44,8 @@ public final class Application {
             config.routes.get("/health", ctx -> ctx.json(java.util.Map.of("status", "ok")));
             config.routes.get("/openapi.json", ctx -> ctx.contentType("application/json")
                     .result(Application.class.getResourceAsStream("/openapi.json")));
+            config.routes.post("/api/auth/login", auth::login);
+            config.routes.get("/api/auth/verify", auth::verify);
             config.routes.get("/api/jokes", jokes::list);
             config.routes.get("/api/jokes/{id}", jokes::get);
             config.routes.post("/api/jokes", jokes::create);
